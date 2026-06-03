@@ -6,6 +6,7 @@ import yfinance as yf
 from datetime import datetime
 import FinanceDataReader as fdr
 from opendartreader import OpenDartReader
+import streamlit as st
 
 
 def get_highly_secure_session():
@@ -19,6 +20,7 @@ def get_highly_secure_session():
     return session
 
 
+@st.cache_data(ttl=3600)
 def fetch_google_news_rss(ticker_symbol, lang_mode):
     news_items = []
     search_term = ticker_symbol.replace('.KS', '').replace('.KQ', '')
@@ -119,6 +121,7 @@ def parse_dart_to_yf_format(dart_df, year):
     return bs_df, fi_df
 
 
+@st.cache_data(ttl=3600)
 def fetch_raw_financial_data(ticker_symbol, market, dart_key):
     try:
         if market == 'us':
