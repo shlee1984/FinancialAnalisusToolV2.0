@@ -21,11 +21,14 @@ def calc_growth_raw(current, prior):
 
 
 def compute_financial_metrics(balance_sheet, financials, market_metrics, hist_df, lang):
-    if balance_sheet.shape[1] < 2 or financials.shape[1] < 2:
-        return None
+    has_fundamentals = balance_sheet.shape[1] >= 2 and financials.shape[1] >= 2
 
-    current_year = balance_sheet.columns[0][:7] if len(balance_sheet.columns[0]) > 4 else balance_sheet.columns[0]
-    prior_year = balance_sheet.columns[1][:7] if len(balance_sheet.columns[1]) > 4 else balance_sheet.columns[1]
+    current_year = "N/A"
+    prior_year = "N/A"
+    if balance_sheet.shape[1] >= 1:
+        current_year = balance_sheet.columns[0][:7] if len(balance_sheet.columns[0]) > 4 else balance_sheet.columns[0]
+    if balance_sheet.shape[1] >= 2:
+        prior_year = balance_sheet.columns[1][:7] if len(balance_sheet.columns[1]) > 4 else balance_sheet.columns[1]
 
     sales_cur, sales_pri = get_row_values_robust(financials, ['Total Revenue', 'Revenue', 'Operating Revenue'])
     cogs_cur, cogs_pri = get_row_values_robust(financials, ['Cost Of Revenue', 'Cost of Goods Sold'])
@@ -191,6 +194,7 @@ def compute_financial_metrics(balance_sheet, financials, market_metrics, hist_df
                     """
 
     return {
+        'has_fundamentals': has_fundamentals,
         'current_year': current_year,
         'prior_year': prior_year,
         'sales_cur': sales_cur,

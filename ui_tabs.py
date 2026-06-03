@@ -5,9 +5,8 @@ from analysis import compute_financial_metrics, calc_growth_raw
 
 def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials, market_metrics, hist_df):
     metrics = compute_financial_metrics(balance_sheet, financials, market_metrics, hist_df, st.session_state.lang)
-    if metrics is None:
-        st.warning(L["insufficient_data"])
-        return
+    if not metrics.get('has_fundamentals', True):
+        st.warning(L["partial_data_warning"])
 
     comp_name = market_metrics.get("longName", ticker_final)
     st.subheader(f"📈 {comp_name} ({ticker_final})")
