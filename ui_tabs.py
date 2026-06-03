@@ -129,7 +129,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
     with tab_tech:
         st.subheader(L["tab_tech_title"])
         tech_df = metrics.get('tech_df', pd.DataFrame())
-        if tech_df.empty or len(tech_df) < 30:
+        if not metrics.get('has_technical', False):
             st.info(L["tech_insufficient_data"])
         else:
             st.metric("RSI (14)", f"{metrics['rsi_val']:.1f}")
