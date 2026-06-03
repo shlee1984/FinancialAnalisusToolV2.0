@@ -54,10 +54,18 @@ if "cached_news" not in st.session_state:
 
 # --- 사이드바: DART API 설정 (백엔드에서만 작동, UI 숨김) ---
 # Streamlit Secrets 또는 환경 변수에서 API 키 로드
+dart_api_key = ""
 try:
-    dart_api_key = st.secrets.get("DART_API_KEY", os.getenv("DART_API_KEY", ""))
-except:
-    dart_api_key = os.getenv("DART_API_KEY", "")
+    # 먼저 st.secrets 확인
+    if hasattr(st, 'secrets') and 'DART_API_KEY' in st.secrets:
+        dart_api_key = st.secrets['DART_API_KEY']
+    # 그 다음 환경 변수 확인
+    elif 'DART_API_KEY' in os.environ:
+        dart_api_key = os.environ['DART_API_KEY']
+    else:
+        dart_api_key = ""
+except Exception as e:
+    dart_api_key = os.environ.get('DART_API_KEY', "")
 
 # 3. 타이틀 및 다국어 버튼 레이아웃 구성
 title_col, lang_col = st.columns([3, 1])

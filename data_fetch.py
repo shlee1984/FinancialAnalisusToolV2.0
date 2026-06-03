@@ -159,22 +159,38 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
             hist_df = fdr.DataReader(code, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
             if hist_df.empty:
                 return None
-            dart = OpenDartReader(dart_key)
-            company_info = dart.company(code)
-            corp_name = company_info['corp_name'] if company_info else code
-            target_year = end_date.year - 1
+            
+            corp_name = code
             try:
-                dart_fs = dart.finstate_all(code, target_year)
-            except Exception:
+                dart = OpenDartReader(dart_key)
+                company_info = dart.company(code)
+                if company_info and 'corp_name' in company_info:
+                    corp_name = company_info['corp_name']
+            except Exception as e:
+                st.warning(f"회사 정보 조회 실패: {str(e)[:50]}")
+            
+            target_year = end_date.year - 1
+            bs_df = pd.DataFrame()
+            fi_df = pd.DataFrame()
+            
+            try:
+                dart = OpenDartReader(dart_key)
+                dart_fs = None
                 try:
-                    dart_fs = dart.finstate_all(code, target_year, fs_type='CFS')
+                    dart_fs = dart.finstate_all(code, target_year)
                 except Exception:
                     try:
-                        dart_fs = dart.finstate_all(code, target_year - 1, fs_type='CFS')
-                        target_year -= 1
+                        dart_fs = dart.finstate_all(code, target_year, fs_type='CFS')
                     except Exception:
-                        dart_fs = None
-            bs_df, fi_df = parse_dart_to_yf_format(dart_fs, target_year)
+                        try:
+                            dart_fs = dart.finstate_all(code, target_year - 1, fs_type='CFS')
+                            target_year -= 1
+                        except Exception:
+                            dart_fs = None
+                
+                bs_df, fi_df = parse_dart_to_yf_format(dart_fs, target_year)
+            except Exception as e:
+                st.warning(f"DART 재무제표 조회 오류: {str(e)[:50]}")
             cur_price = float(hist_df['Close'].iloc[-1])
             high_52 = float(hist_df['High'].max())
             low_52 = float(hist_df['Low'].min())
