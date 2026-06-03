@@ -5,8 +5,56 @@ import numpy as np
 import yfinance as yf
 from datetime import datetime
 import FinanceDataReader as fdr
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from opendartreader import OpenDartReader
 import streamlit as st
+
+
+def get_retry_session(retries=3, backoff_factor=0.5, timeout=10):
+    session = requests.Session()
+    retry_kwargs = {
+        'total': retries,
+        'backoff_factor': backoff_factor,
+        'status_forcelist': [429, 500, 502, 503, 504]
+    }
+    try:
+        retry_kwargs['allowed_methods'] = frozenset(['GET', 'POST'])
+    except Exception:
+        retry_kwargs['method_whitelist'] = frozenset(['GET', 'POST'])
+
+    retry = Retry(**retry_kwargs)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Connection': 'keep-alive'
+    })
+    return session
+
+
+GLOBAL_REQUESTS_SESSION = get_retry_session()
+
+
+_original_requests_get = requests.get
+
+def patched_requests_get(*args, **kwargs):
+    kwargs.setdefault('timeout', 10)
+    return GLOBAL_REQUESTS_SESSION.get(*args, **kwargs)
+
+
+_requests_session_request = requests.Session.request
+
+def patched_session_request(self, method, url, **kwargs):
+    kwargs.setdefault('timeout', 10)
+    return _requests_session_request(self, method, url, **kwargs)
+
+
+requests.get = patched_requests_get
+requests.Session.request = patched_session_request
 
 
 @st.cache_resource
@@ -43,16 +91,15 @@ def fetch_dart_company_info(dart_key, code):
 def fetch_dart_finstate_data(dart_key, code, year):
     try:
         dart = get_cached_dart_reader(dart_key)
-        try:
-            return dart.finstate_all(code, year), year
-        except Exception:
-            try:
-                return dart.finstate_all(code, year, fs_type='CFS'), year
-            except Exception:
+        for target_year in [year, year - 1]:
+            for fs_div in ['CFS', 'OFS']:
                 try:
-                    return dart.finstate_all(code, year - 1, fs_type='CFS'), year - 1
+                    fin_df = dart.finstate_all(code, target_year, fs_div=fs_div)
+                    if fin_df is not None and not fin_df.empty:
+                        return fin_df, target_year
                 except Exception:
-                    return None, year
+                    continue
+        return None, year
     except Exception:
         return None, year
 
