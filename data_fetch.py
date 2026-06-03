@@ -7,6 +7,7 @@ from datetime import datetime
 import FinanceDataReader as fdr
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import opendartreader
 from opendartreader import OpenDartReader
 import streamlit as st
 
@@ -57,6 +58,17 @@ requests.get = patched_requests_get
 requests.Session.request = patched_session_request
 
 
+def patch_opendart_requests():
+    try:
+        opendartreader.dart_list.requests = requests
+        opendartreader.dart_finstate.requests = requests
+    except Exception:
+        pass
+
+
+patch_opendart_requests()
+
+
 @st.cache_resource
 def get_cached_session():
     session = requests.Session()
@@ -71,7 +83,12 @@ def get_cached_session():
 
 @st.cache_resource
 def get_cached_dart_reader(dart_key):
-    return OpenDartReader(dart_key)
+    try:
+        dart = OpenDartReader(dart_key)
+        return dart
+    except Exception as e:
+        print(f"DART init error: {e}")
+        return None
 
 
 def get_highly_secure_session():
@@ -82,6 +99,8 @@ def get_highly_secure_session():
 def fetch_dart_company_info(dart_key, code):
     try:
         dart = get_cached_dart_reader(dart_key)
+        if dart is None:
+            return None
         return dart.company(code)
     except Exception:
         return None
@@ -91,6 +110,8 @@ def fetch_dart_company_info(dart_key, code):
 def fetch_dart_finstate_data(dart_key, code, year):
     try:
         dart = get_cached_dart_reader(dart_key)
+        if dart is None:
+            return None, year
         for target_year in [year, year - 1]:
             for fs_div in ['CFS', 'OFS']:
                 try:
@@ -253,11 +274,15 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
             bs_df = pd.DataFrame()
             fi_df = pd.DataFrame()
 
+            dart_error = None
             dart_fs, actual_year = fetch_dart_finstate_data(dart_key, code, target_year)
-            if dart_fs is not None:
+            if dart_fs is not None and not dart_fs.empty:
                 bs_df, fi_df = parse_dart_to_yf_format(dart_fs, actual_year)
             else:
-                st.warning("DART 데이터가 현재 제한되어 있습니다. 잠시 후 다시 시도해 주세요.")
+                bs_df = pd.DataFrame()
+                fi_df = pd.DataFrame()
+                dart_error = "DART 데이터를 불러오는 중 오류가 발생했습니다. 일부 기본 재무 지표는 비어 있을 수 있습니다."
+
             cur_price = float(hist_df['Close'].iloc[-1])
             high_52 = float(hist_df['High'].max())
             low_52 = float(hist_df['Low'].min())
@@ -276,7 +301,15 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
                 'longName': corp_name,
                 'currency': 'KRW'
             }
-            return {"balance_sheet": bs_df, "financials": fi_df, "metrics": market_metrics, "history": hist_df}
+            bundle = {
+                'balance_sheet': bs_df,
+                'financials': fi_df,
+                'metrics': market_metrics,
+                'history': hist_df,
+                'partial': True if dart_error else False,
+                'dart_error': dart_error
+            }
+            return bundle
     except Exception as e:
         print(f"Data Fetch Error: {e}")
         return None

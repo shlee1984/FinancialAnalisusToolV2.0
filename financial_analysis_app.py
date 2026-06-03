@@ -1,8 +1,14 @@
 import os
+import sys
 from dotenv import load_dotenv
 
 # 환경 변수 로드
 load_dotenv()
+
+# 앱 루트 경로를 명시적으로 추가하여 Streamlit 배포 환경에서 모듈 import 문제를 방지합니다.
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 import streamlit as st
 from app_constants import MESSAGES
@@ -130,6 +136,8 @@ elif not data_bundle:
     err_key = "fetch_error_kr" if st.session_state.market == "kr" else "fetch_error"
     st.error(L[err_key])
 else:
+    if isinstance(data_bundle, dict) and data_bundle.get('dart_error'):
+        st.warning(data_bundle['dart_error'])
     render_analysis_tabs(
         L,
         ticker_final,
