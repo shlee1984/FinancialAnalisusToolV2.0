@@ -82,10 +82,15 @@ def get_cached_session():
 
 
 @st.cache_resource
+def _create_cached_dart_reader(dart_key):
+    return OpenDartReader(dart_key)
+
+
 def get_cached_dart_reader(dart_key):
+    if not dart_key:
+        return None
     try:
-        dart = OpenDartReader(dart_key)
-        return dart
+        return _create_cached_dart_reader(dart_key)
     except Exception as e:
         print(f"DART init error: {e}")
         return None
