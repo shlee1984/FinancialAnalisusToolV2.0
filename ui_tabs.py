@@ -12,8 +12,8 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
     comp_name = market_metrics.get("longName", ticker_final)
     st.subheader(f"📈 {comp_name} ({ticker_final})")
 
-    tab_report, tab_overview, tab_ichimoku, tab_bs, tab_ratios, tab_valuation, tab_news = st.tabs([
-        L["tab_report"], L["tab_overview"], L["tab_ichimoku"], L["tab_bs"], L["tab_ratios"], L["tab_valuation"], L["tab_news"]
+    tab_report, tab_overview, tab_ichimoku, tab_tech, tab_bs, tab_ratios, tab_valuation, tab_news = st.tabs([
+        L["tab_report"], L["tab_overview"], L["tab_ichimoku"], L["tab_tech"], L["tab_bs"], L["tab_ratios"], L["tab_valuation"], L["tab_news"]
     ])
 
     with tab_report:
@@ -125,6 +125,22 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
             st.line_chart(metrics['hist_df'][['Close', 'Tenkan_Sen', 'Kijun_Sen', 'Senkou_Span_A', 'Senkou_Span_B']].tail(60), use_container_width=True)
         else:
             st.info(metrics['ichimoku_text'])
+
+    with tab_tech:
+        st.subheader(L["tab_tech_title"])
+        tech_df = metrics.get('tech_df', pd.DataFrame())
+        if tech_df.empty or len(tech_df) < 30:
+            st.info(L["tech_insufficient_data"])
+        else:
+            st.metric("RSI (14)", f"{metrics['rsi_val']:.1f}")
+            st.metric("MACD", f"{metrics['macd_val']:.3f}", delta=f"{metrics['macd_hist']:+.3f}")
+            st.metric("OBV", f"{metrics['obv_val']:.0f}")
+
+            st.markdown(f"#### {L['chart_trend']}")
+            st.line_chart(tech_df[['Close', 'RSI']].tail(60), use_container_width=True)
+            st.line_chart(tech_df[['MACD', 'MACD_Signal']].tail(60), use_container_width=True)
+            st.area_chart(tech_df[['OBV']].tail(60), use_container_width=True)
+            st.caption("RSI is used to gauge overbought/oversold momentum, MACD tracks trend crossovers, and OBV reflects volume-driven flow.")
 
     with tab_bs:
         st.subheader("Balance Sheet Summary")

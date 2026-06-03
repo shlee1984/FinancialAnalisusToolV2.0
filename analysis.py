@@ -96,6 +96,35 @@ def compute_financial_metrics(balance_sheet, financials, market_metrics, hist_df
     fixed_cost_cur = sga_cur if sga_cur > 0 else max(gp_cur - op_cur, sales_cur * 0.2)
     fixed_cost_pri = sga_pri if sga_pri > 0 else max(gp_pri - op_pri, sales_pri * 0.2)
 
+    # --- 기술적 보조 지표 계산 (RSI, MACD, OBV) ---
+    rsi_val = 0.0
+    macd_val = macd_signal = macd_hist = 0.0
+    obv_val = 0.0
+    tech_df = hist_df.copy()
+
+    if not tech_df.empty and len(tech_df) >= 30:
+        # 1. RSI (14)
+        delta = tech_df['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        tech_df['RSI'] = 100 - (100 / (1 + rs))
+        rsi_val = tech_df['RSI'].iloc[-1]
+
+        # 2. MACD (12, 26, 9)
+        exp1 = tech_df['Close'].ewm(span=12, adjust=False).mean()
+        exp2 = tech_df['Close'].ewm(span=26, adjust=False).mean()
+        tech_df['MACD'] = exp1 - exp2
+        tech_df['MACD_Signal'] = tech_df['MACD'].ewm(span=9, adjust=False).mean()
+        tech_df['MACD_Hist'] = tech_df['MACD'] - tech_df['MACD_Signal']
+        macd_val = tech_df['MACD'].iloc[-1]
+        macd_signal = tech_df['MACD_Signal'].iloc[-1]
+        macd_hist = tech_df['MACD_Hist'].iloc[-1]
+
+        # 3. OBV
+        tech_df['OBV'] = (np.sign(tech_df['Close'].diff()) * tech_df['Volume']).fillna(0).cumsum()
+        obv_val = tech_df['OBV'].iloc[-1]
+
     cm_cur = sales_cur - cogs_cur
     cm_pri = sales_pri - cogs_pri
     cm_rate_cur = (cm_cur / sales_cur) if sales_cur != 0 else 0.0
@@ -259,6 +288,12 @@ def compute_financial_metrics(balance_sheet, financials, market_metrics, hist_df
         'ccc_pri': ccc_pri,
         'fixed_cost_cur': fixed_cost_cur,
         'fixed_cost_pri': fixed_cost_pri,
+        'rsi_val': rsi_val,
+        'macd_val': macd_val,
+        'macd_signal': macd_signal,
+        'macd_hist': macd_hist,
+        'obv_val': obv_val,
+        'tech_df': tech_df,
         'cm_cur': cm_cur,
         'cm_pri': cm_pri,
         'cm_rate_cur': cm_rate_cur,
