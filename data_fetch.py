@@ -9,7 +9,8 @@ from opendartreader import OpenDartReader
 import streamlit as st
 
 
-def get_highly_secure_session():
+@st.cache_resource
+def get_cached_session():
     session = requests.Session()
     session.headers.update({
         'User-Agent': 'Mozilla/5.0',
@@ -18,6 +19,42 @@ def get_highly_secure_session():
         'Connection': 'keep-alive'
     })
     return session
+
+
+@st.cache_resource
+def get_cached_dart_reader(dart_key):
+    return OpenDartReader(dart_key)
+
+
+def get_highly_secure_session():
+    return get_cached_session()
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_dart_company_info(dart_key, code):
+    try:
+        dart = get_cached_dart_reader(dart_key)
+        return dart.company(code)
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_dart_finstate_data(dart_key, code, year):
+    try:
+        dart = get_cached_dart_reader(dart_key)
+        try:
+            return dart.finstate_all(code, year), year
+        except Exception:
+            try:
+                return dart.finstate_all(code, year, fs_type='CFS'), year
+            except Exception:
+                try:
+                    return dart.finstate_all(code, year - 1, fs_type='CFS'), year - 1
+                except Exception:
+                    return None, year
+    except Exception:
+        return None, year
 
 
 @st.cache_data(ttl=3600)
@@ -121,7 +158,7 @@ def parse_dart_to_yf_format(dart_df, year):
     return bs_df, fi_df
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 def fetch_raw_financial_data(ticker_symbol, market, dart_key):
     try:
         if market == 'us':
@@ -161,36 +198,19 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
                 return None
             
             corp_name = code
-            try:
-                dart = OpenDartReader(dart_key)
-                company_info = dart.company(code)
-                if company_info and 'corp_name' in company_info:
-                    corp_name = company_info['corp_name']
-            except Exception as e:
-                st.warning(f"회사 정보 조회 실패: {str(e)[:50]}")
-            
+            company_info = fetch_dart_company_info(dart_key, code)
+            if company_info and 'corp_name' in company_info:
+                corp_name = company_info['corp_name']
+
             target_year = end_date.year - 1
             bs_df = pd.DataFrame()
             fi_df = pd.DataFrame()
-            
-            try:
-                dart = OpenDartReader(dart_key)
-                dart_fs = None
-                try:
-                    dart_fs = dart.finstate_all(code, target_year)
-                except Exception:
-                    try:
-                        dart_fs = dart.finstate_all(code, target_year, fs_type='CFS')
-                    except Exception:
-                        try:
-                            dart_fs = dart.finstate_all(code, target_year - 1, fs_type='CFS')
-                            target_year -= 1
-                        except Exception:
-                            dart_fs = None
-                
-                bs_df, fi_df = parse_dart_to_yf_format(dart_fs, target_year)
-            except Exception as e:
-                st.warning(f"DART 재무제표 조회 오류: {str(e)[:50]}")
+
+            dart_fs, actual_year = fetch_dart_finstate_data(dart_key, code, target_year)
+            if dart_fs is not None:
+                bs_df, fi_df = parse_dart_to_yf_format(dart_fs, actual_year)
+            else:
+                st.warning("DART 데이터가 현재 제한되어 있습니다. 잠시 후 다시 시도해 주세요.")
             cur_price = float(hist_df['Close'].iloc[-1])
             high_52 = float(hist_df['High'].max())
             low_52 = float(hist_df['Low'].min())

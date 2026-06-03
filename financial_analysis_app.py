@@ -114,8 +114,9 @@ ticker_final = render_search_ui(L, st.session_state.market)
 # Ticker가 변경되었을 때만 데이터를 fetch
 if ticker_final != st.session_state.current_ticker:
     st.session_state.current_ticker = ticker_final
-    data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market, dart_api_key)
-    stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
+    with st.spinner("데이터를 불러오는 중입니다. 잠시만 기다려주세요..."):
+        data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market, dart_api_key)
+        stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
     st.session_state.cached_data_bundle = data_bundle
     st.session_state.cached_news = stock_news
 else:
