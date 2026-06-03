@@ -45,6 +45,12 @@ if "lang" not in st.session_state:
     st.session_state.lang = "ko"
 if "market" not in st.session_state:
     st.session_state.market = "us"
+if "current_ticker" not in st.session_state:
+    st.session_state.current_ticker = None
+if "cached_data_bundle" not in st.session_state:
+    st.session_state.cached_data_bundle = None
+if "cached_news" not in st.session_state:
+    st.session_state.cached_news = None
 
 # --- 사이드바: DART API 설정 (백엔드에서만 작동, UI 숨김) ---
 # Streamlit Secrets 또는 환경 변수에서 API 키 로드
@@ -97,8 +103,17 @@ st.markdown("---")
 
 ticker_final = render_search_ui(L, st.session_state.market)
 
-data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market, dart_api_key)
-stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
+# Ticker가 변경되었을 때만 데이터를 fetch
+if ticker_final != st.session_state.current_ticker:
+    st.session_state.current_ticker = ticker_final
+    data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market, dart_api_key)
+    stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
+    st.session_state.cached_data_bundle = data_bundle
+    st.session_state.cached_news = stock_news
+else:
+    # 캐시된 데이터 사용
+    data_bundle = st.session_state.cached_data_bundle
+    stock_news = st.session_state.cached_news
 
 if data_bundle == "NO_API_KEY":
     st.error("사이드바에 DART API Key를 입력해야 한국 주식 데이터를 불러올 수 있습니다.")
