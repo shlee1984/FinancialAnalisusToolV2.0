@@ -55,12 +55,68 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
             * **{L['total_score_text']}:** `{total_score} / 4`
             """)
 
+            # 기본 재무 종합의견을 가져온 뒤, 기술적 지표(RSI/MACD/OBV)가 있으면 간단한 요약을 추가합니다.
             if total_score >= 3:
-                st.success(L["report_good"])
+                base_report = L["report_good"]
             elif total_score == 2:
-                st.warning(L["report_neutral"])
+                base_report = L["report_neutral"]
             else:
-                st.error(L["report_bad"])
+                base_report = L["report_bad"]
+
+            tech_summary = ""
+            if metrics.get('has_technical', False):
+                # RSI
+                rsi_val = metrics.get('rsi_val', None)
+                if rsi_val is not None:
+                    if rsi_val >= 70:
+                        rsi_msg = L['rsi_overbought']
+                    elif rsi_val <= 30:
+                        rsi_msg = L['rsi_oversold']
+                    else:
+                        rsi_msg = L['rsi_neutral']
+                else:
+                    rsi_msg = ""
+
+                # MACD
+                macd_val = metrics.get('macd_val', None)
+                macd_signal = metrics.get('macd_signal', None)
+                if macd_val is not None and macd_signal is not None:
+                    if macd_val > macd_signal:
+                        macd_msg = L['macd_bullish']
+                    elif macd_val < macd_signal:
+                        macd_msg = L['macd_bearish']
+                    else:
+                        macd_msg = L['macd_neutral']
+                else:
+                    macd_msg = ""
+
+                # OBV
+                tech_df = metrics.get('tech_df') if isinstance(metrics.get('tech_df'), pd.DataFrame) else pd.DataFrame()
+                obv_val = metrics.get('obv_val', None)
+                prev_obv = tech_df['OBV'].iloc[-2] if (isinstance(tech_df, pd.DataFrame) and len(tech_df) >= 2) else None
+                if obv_val is not None and prev_obv is not None:
+                    if obv_val > prev_obv:
+                        obv_msg = L['obv_up']
+                    elif obv_val < prev_obv:
+                        obv_msg = L['obv_down']
+                    else:
+                        obv_msg = L['obv_flat']
+                else:
+                    obv_msg = ""
+
+                # 언어에 따라 간단한 기술적 요약 헤더를 추가
+                header = "**기술적 요약:**" if st.session_state.lang == 'ko' else "**Technical summary:**"
+                tech_parts = " ".join([p for p in [rsi_msg, macd_msg, obv_msg] if p])
+                if tech_parts:
+                    tech_summary = f"\n\n{header} {tech_parts}"
+
+            final_report = base_report + tech_summary
+            if total_score >= 3:
+                st.success(final_report)
+            elif total_score == 2:
+                st.warning(final_report)
+            else:
+                st.error(final_report)
 
         st.markdown("---")
         st.subheader(L["section3"])
