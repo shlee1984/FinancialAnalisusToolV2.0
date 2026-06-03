@@ -1,16 +1,8 @@
-import sys
 import os
 from dotenv import load_dotenv
 
 # 환경 변수 로드
 load_dotenv()
-
-# 스트림릿이 패키지를 못 찾을 때 경로를 강제로 지정해주는 치트키
-python_packages_path = r"C:\Users\shlee\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages"
-if python_packages_path not in sys.path:
-    sys.path.append(python_packages_path)
-
-
 
 import streamlit as st
 from app_constants import MESSAGES
