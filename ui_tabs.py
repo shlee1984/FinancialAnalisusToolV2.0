@@ -129,6 +129,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
     with tab_tech:
         st.subheader(L["tab_tech_title"])
         tech_df = metrics.get('tech_df', pd.DataFrame())
+        company_name = metrics.get('longName', ticker_final)
         if not metrics.get('has_technical', False):
             st.info(L["tech_insufficient_data"])
         else:
@@ -142,6 +143,9 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                 obv_text = L['obv_up']
             elif obv_val < prev_obv:
                 obv_text = L['obv_down']
+
+            st.markdown(f"**{company_name} ({ticker_final}) — {L['tech_summary_title']}**")
+            st.write(L['tech_summary_intro'])
 
             st.metric("RSI (14)", f"{rsi_val:.1f}")
             st.metric("MACD", f"{macd_val:.3f}", delta=f"{metrics['macd_hist']:+.3f}")
