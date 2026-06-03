@@ -132,10 +132,36 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
         if not metrics.get('has_technical', False):
             st.info(L["tech_insufficient_data"])
         else:
-            st.metric("RSI (14)", f"{metrics['rsi_val']:.1f}")
-            st.metric("MACD", f"{metrics['macd_val']:.3f}", delta=f"{metrics['macd_hist']:+.3f}")
-            st.metric("OBV", f"{metrics['obv_val']:.0f}")
+            rsi_val = metrics['rsi_val']
+            macd_val = metrics['macd_val']
+            macd_signal = metrics['macd_signal']
+            obv_val = metrics['obv_val']
+            prev_obv = tech_df['OBV'].iloc[-2] if len(tech_df) >= 2 else obv_val
+            obv_text = L['obv_flat']
+            if obv_val > prev_obv:
+                obv_text = L['obv_up']
+            elif obv_val < prev_obv:
+                obv_text = L['obv_down']
 
+            st.metric("RSI (14)", f"{rsi_val:.1f}")
+            st.metric("MACD", f"{macd_val:.3f}", delta=f"{metrics['macd_hist']:+.3f}")
+            st.metric("OBV", f"{obv_val:.0f}")
+
+            if rsi_val >= 70:
+                st.info(L['rsi_overbought'])
+            elif rsi_val <= 30:
+                st.info(L['rsi_oversold'])
+            else:
+                st.info(L['rsi_neutral'])
+
+            if macd_val > macd_signal:
+                st.info(L['macd_bullish'])
+            elif macd_val < macd_signal:
+                st.info(L['macd_bearish'])
+            else:
+                st.info(L['macd_neutral'])
+
+            st.info(obv_text)
             st.markdown(f"#### {L['chart_trend']}")
             st.line_chart(tech_df[['Close', 'RSI']].tail(60), use_container_width=True)
             st.line_chart(tech_df[['MACD', 'MACD_Signal']].tail(60), use_container_width=True)
