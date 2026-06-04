@@ -83,11 +83,11 @@ with lang_col:
     st.write("<div class='lang-container'>", unsafe_allow_html=True)
     btn_ko, btn_en, btn_es = st.columns(3)
     with btn_ko:
-        if st.button("한글", use_container_width=True):
+        if st.button("한글", width='stretch'):
             st.session_state.lang = "ko"
             st.rerun()
     with btn_en:
-        if st.button("English", use_container_width=True):
+        if st.button("English", width='stretch'):
             st.session_state.lang = "en"
             st.rerun()
     with btn_es:

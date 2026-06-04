@@ -152,7 +152,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                     calc_growth_raw(metrics['net_cur'], metrics['net_pri'])
                 ]
             }
-            st.dataframe(pd.DataFrame(earnings_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(earnings_data), width='stretch', hide_index=True)
             st.bar_chart(pd.DataFrame({'Current': [metrics['sales_cur'], metrics['op_cur'], metrics['net_cur']], 'Prior': [metrics['sales_pri'], metrics['op_pri'], metrics['net_pri']]}, index=['Sales', 'Operating', 'Net Income']))
 
     with tab_ichimoku:
@@ -178,7 +178,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                 st.error(metrics['ichimoku_text'])
 
             st.markdown(f"#### {L['chart_trend']}")
-            st.line_chart(metrics['hist_df'][['Close', 'Tenkan_Sen', 'Kijun_Sen', 'Senkou_Span_A', 'Senkou_Span_B']].tail(60), use_container_width=True)
+            st.line_chart(metrics['hist_df'][['Close', 'Tenkan_Sen', 'Kijun_Sen', 'Senkou_Span_A', 'Senkou_Span_B']].tail(60), width='stretch')
         else:
             st.info(metrics['ichimoku_text'])
 
@@ -223,9 +223,9 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
 
             st.info(obv_text)
             st.markdown(f"#### {L['chart_trend']}")
-            st.line_chart(tech_df[['Close', 'RSI']].tail(60), use_container_width=True)
-            st.line_chart(tech_df[['MACD', 'MACD_Signal']].tail(60), use_container_width=True)
-            st.area_chart(tech_df[['OBV']].tail(60), use_container_width=True)
+            st.line_chart(tech_df[['Close', 'RSI']].tail(60), width='stretch')
+            st.line_chart(tech_df[['MACD', 'MACD_Signal']].tail(60), width='stretch')
+            st.area_chart(tech_df[['OBV']].tail(60), width='stretch')
             st.caption("RSI is used to gauge overbought/oversold momentum, MACD tracks trend crossovers, and OBV reflects volume-driven flow.")
 
     with tab_bs:
@@ -260,7 +260,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                     calc_growth_raw(metrics['te_cur'], metrics['te_pri'])
                 ]
             }
-            st.dataframe(pd.DataFrame(bs_summary_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(bs_summary_data), width='stretch', hide_index=True)
 
     with tab_ratios:
         st.subheader("Liquidity & Cycles")
@@ -315,7 +315,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                     "낮을수록 우수"
                 ]
             }
-            st.dataframe(pd.DataFrame(ratio_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(ratio_data), width='stretch', hide_index=True)
 
     with tab_valuation:
         st.subheader("CVP & Valuation Multiples")
@@ -347,7 +347,7 @@ def render_analysis_tabs(L, ticker_final, stock_news, balance_sheet, financials,
                     "Multiples"
                 ]
             }
-            st.dataframe(pd.DataFrame(val_lev_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(val_lev_data), width='stretch', hide_index=True)
             st.caption("⚠️ CM(공헌이익)은 외부 재무제표 특성상 매출총이익률로 근사 계산됩니다. BEP는 SG&A를 고정비로 가정한 추정치입니다.")
 
     with tab_news:
