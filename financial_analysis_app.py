@@ -58,20 +58,6 @@ if "cached_data_bundle" not in st.session_state:
 if "cached_news" not in st.session_state:
     st.session_state.cached_news = None
 
-# --- 사이드바: DART API 설정 (백엔드에서만 작동, UI 숨김) ---
-# Streamlit Secrets 또는 환경 변수에서 API 키 로드
-dart_api_key = ""
-try:
-    # 먼저 st.secrets 확인
-    if hasattr(st, 'secrets') and 'DART_API_KEY' in st.secrets:
-        dart_api_key = st.secrets['DART_API_KEY']
-    # 그 다음 환경 변수 확인
-    elif 'DART_API_KEY' in os.environ:
-        dart_api_key = os.environ['DART_API_KEY']
-    else:
-        dart_api_key = ""
-except Exception as e:
-    dart_api_key = os.environ.get('DART_API_KEY', "")
 
 # 3. 타이틀 및 다국어 버튼 레이아웃 구성
 title_col, lang_col = st.columns([3, 1])
@@ -121,7 +107,7 @@ ticker_final = render_search_ui(L, st.session_state.market)
 if ticker_final != st.session_state.current_ticker:
     st.session_state.current_ticker = ticker_final
     with st.spinner("데이터를 불러오는 중입니다. 잠시만 기다려주세요..."):
-        data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market, dart_api_key)
+        data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market)
         stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
     st.session_state.cached_data_bundle = data_bundle
     st.session_state.cached_news = stock_news
@@ -136,8 +122,7 @@ if data_bundle == "NO_API_KEY":
     st.error("사이드바에 DART API Key를 입력해야 한국 주식 데이터를 불러올 수 있습니다.")
 elif not data_bundle:
     err_key = "fetch_error_kr" if st.session_state.market == "kr" else "fetch_error"
-f isinstance(data_bundle, dict) and data_bundle.get('dart_error'):
-        st.warning(data_bundle['dart_error'])
+
     render_analysis_tabs(
         L,
         ticker_final,
