@@ -125,7 +125,9 @@ if ticker_final != st.session_state.current_ticker:
         stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
     st.session_state.cached_data_bundle = data_bundle
     st.session_state.cached_news = stock_news
-elsedata_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market
+else:
+    # 캐시된 데이터 사용
+    data_bundle = st.session_state.cached_data_bundle
     # 캐시된 데이터 사용
     data_bundle = st.session_state.cached_data_bundle
     stock_news = st.session_state.cached_news
