@@ -81,19 +81,16 @@ def get_cached_session():
     return session
 
 
-@st.cache_resource
-def _create_cached_dart_reader(dart_key):
-    return OpenDartReader(dart_key)
-
-
 def get_cached_dart_reader(dart_key):
     if not dart_key:
         return None
-    try:
-        return _create_cached_dart_reader(dart_key)
-    except Exception as e:
-        print(f"DART init error: {e}")
-        return None
+    
+    @st.cache_resource(show_spinner="DART 고유번호 파일을 다운로드 중입니다...")
+    def init_dart(key):
+        # 내부적으로 requests를 사용하므로 타임아웃이 중요함
+        return OpenDartReader(key)
+    
+    return init_dart(dart_key)
 
 
 def get_highly_secure_session():

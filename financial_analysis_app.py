@@ -1,14 +1,14 @@
 import os
 import sys
-from dotenv import load_dotenv
-
-# 환경 변수 로드
-load_dotenv()
 
 # 앱 루트 경로를 명시적으로 추가하여 Streamlit 배포 환경에서 모듈 import 문제를 방지합니다.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
+
+from dotenv import load_dotenv
+# 환경 변수 로드
+load_dotenv()
 
 import streamlit as st
 from app_constants import MESSAGES
@@ -108,12 +108,12 @@ with market_col2:
     m_btn_us, m_btn_kr = st.columns(2)
     with m_btn_us:
         us_type = "primary" if st.session_state.market == "us" else "secondary"
-        if st.button(L["market_us"], use_container_width=True, type=us_type):
+        if st.button(L["market_us"], width='stretch', type=us_type):
             st.session_state.market = "us"
             st.rerun()
     with m_btn_kr:
         kr_type = "primary" if st.session_state.market == "kr" else "secondary"
-        if st.button(L["market_kr"], use_container_width=True, type=kr_type):
+        if st.button(L["market_kr"], width='stretch', type=kr_type):
             st.session_state.market = "kr"
             st.rerun()
 
