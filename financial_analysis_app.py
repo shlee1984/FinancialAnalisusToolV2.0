@@ -118,8 +118,6 @@ else:
     data_bundle = st.session_state.cached_data_bundle
     stock_news = st.session_state.cached_news
 
-if data_bundle == "NO_API_KEY":
-    st.error("사이드바에 DART API Key를 입력해야 한국 주식 데이터를 불러올 수 있습니다.")
 elif not data_bundle:
     err_key = "fetch_error_kr" if st.session_state.market == "kr" else "fetch_error"
 
