@@ -108,7 +108,7 @@ if ticker_final != st.session_state.current_ticker:
     st.session_state.current_ticker = ticker_final
     with st.spinner("데이터를 불러오는 중입니다. 잠시만 기다려주세요..."):
         data_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market)
-        stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
+        stock_news = fetch_google_news_rss(ticker_final)
     st.session_state.cached_data_bundle = data_bundle
     st.session_state.cached_news = stock_news
 else:

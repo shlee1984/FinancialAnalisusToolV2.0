@@ -83,12 +83,11 @@ def get_highly_secure_session():
 
 
 @st.cache_data(ttl=3600)
-def fetch_google_news_rss(ticker_symbol, lang_mode):
+def fetch_google_news_rss(ticker_symbol):
     news_items = []
     search_term = ticker_symbol.replace('.KS', '').replace('.KQ', '')
     try:
-        hl_gl = 'hl=ko&gl=KR&ceid=KR:ko' if lang_mode == 'ko' else 'hl=en-US&gl=US&ceid=US:en'
-        url = f"https://news.google.com/rss/search?q={search_term}+stock&{hl_gl}"
+        url = f"https://news.google.com/rss/search?q={search_term}+stock&hl=en-US&gl=US&ceid=US:en"
         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
         if response.status_code == 200:
             root = ET.fromstring(response.content)
