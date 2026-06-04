@@ -1,4 +1,5 @@
 import FinanceDataReader as fdr
+import streamlit as st
 
 _KR_TICKERS_BUILTIN = {
     "005930": ("삼성전자", "KOSPI"),
@@ -16,6 +17,11 @@ _KR_TICKERS_BUILTIN = {
 }
 
 
+@st.cache_data(ttl=86400)
+def get_krx_listing_cached():
+    """KRX 전체 종목 리스트를 캐싱하여 검색 성능 강화"""
+    return fdr.StockListing('KRX')
+
 def search_krx_by_name(query: str) -> dict:
     """한국 주식 검색 (내장 데이터 및 외부 API fallback)"""
     query_strip = query.strip()
@@ -32,7 +38,7 @@ def search_krx_by_name(query: str) -> dict:
         return result
 
     try:
-        krx_df = fdr.StockListing('KRX')
+        krx_df = get_krx_listing_cached()
         matches = krx_df[krx_df['Name'].str.contains(query_strip, case=False, na=False)]
         for _, row in matches.head(10).iterrows():
             result[f"{row['Name']} ({row['Code']}) [{row.get('Market', 'KRX')}]"] = row['Code']

@@ -91,7 +91,7 @@ with lang_col:
             st.session_state.lang = "en"
             st.rerun()
     with btn_es:
-        if st.button("Español", use_container_width=True):
+        if st.button("Español", width='stretch'):
             st.session_state.lang = "es"
             st.rerun()
     st.write("</div>", unsafe_allow_html=True)

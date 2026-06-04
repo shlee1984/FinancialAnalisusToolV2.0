@@ -131,6 +131,15 @@ def fetch_dart_finstate_data(dart_key, code, year):
 
 
 @st.cache_data(ttl=3600)
+def fetch_kr_history_cached(code, start_date, end_date):
+    """한국 주식 시세 데이터를 캐싱하여 로딩 속도 개선"""
+    try:
+        return fdr.DataReader(code, start_date, end_date)
+    except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=3600)
 def fetch_google_news_rss(ticker_symbol, lang_mode):
     news_items = []
     search_term = ticker_symbol.replace('.KS', '').replace('.KQ', '')
@@ -264,9 +273,11 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
             if not dart_key:
                 return 'NO_API_KEY'
             code = ticker_symbol.zfill(6)
-            end_date = datetime.today()
-            start_date = end_date - pd.DateOffset(years=1)
-            hist_df = fdr.DataReader(code, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+            # 일 단위로 날짜를 고정하여 캐시 효율성 증대
+            today_str = datetime.today().strftime('%Y-%m-%d')
+            start_date_str = (datetime.today() - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+            
+            hist_df = fetch_kr_history_cached(code, start_date_str, today_str)
             if hist_df.empty:
                 return None
             
@@ -275,7 +286,7 @@ def fetch_raw_financial_data(ticker_symbol, market, dart_key):
             if company_info and 'corp_name' in company_info:
                 corp_name = company_info['corp_name']
 
-            target_year = end_date.year - 1
+            target_year = datetime.today().year - 1
             bs_df = pd.DataFrame()
             fi_df = pd.DataFrame()
 
