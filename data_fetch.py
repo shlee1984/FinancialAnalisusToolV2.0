@@ -107,3 +107,36 @@ def fetch_google_news_rss(ticker_symbol, lang_mode):
         pass
     return news_items
 
+@st.cache_data(ttl=300)
+def fetch_raw_financial_data(ticker_symbol, market):
+    try:
+        if market == 'us':
+            session = get_highly_secure_session()
+            stock = yf.Ticker(ticker_symbol, session=session)
+            bs = stock.balance_sheet
+            fi = stock.financials
+            if bs is None or bs.empty or fi is None or fi.empty:
+                return None
+            info = stock.info
+            hist_df = stock.history(period='1y')
+            market_metrics = {
+                'trailingEps': info.get('trailingEps', 0.0),
+                'bookValue': info.get('bookValue', 0.0),
+                'sharesOutstanding': info.get('sharesOutstanding', 1.0),
+                'trailingPE': info.get('trailingPE', 0.0),
+                'priceToBook': info.get('priceToBook', 0.0),
+                'currentPrice': info.get('currentPrice', float(hist_df['Close'].iloc[-1]) if not hist_df.empty else 0.0),
+                'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', float(hist_df['High'].max()) if not hist_df.empty else 0.0),
+                'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', float(hist_df['Low'].min()) if not hist_df.empty else 0.0),
+                'fiftyDayAverage': info.get('fiftyDayAverage', float(hist_df['Close'].tail(50).mean()) if not hist_df.empty else 0.0),
+                'longName': info.get('longName', ticker_symbol),
+                'currency': info.get('currency', 'USD')
+            }
+            bs_df = pd.DataFrame(bs.values, index=bs.index.astype(str), columns=bs.columns.astype(str))
+            fi_df = pd.DataFrame(fi.values, index=fi.index.astype(str), columns=fi.columns.astype(str))
+            return {"balance_sheet": bs_df, "financials": fi_df, "metrics": market_metrics, "history": hist_df}
+
+    except Exception as e:
+        print(f"Data Fetch Error: {e}")
+        return None
+
