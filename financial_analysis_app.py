@@ -101,21 +101,17 @@ st.markdown("---")
 L = MESSAGES[st.session_state.lang]
 
 # 시장 선택 UI
-market_col1, market_col2 = st.columns([1, 3])
+market_col1, market_col2 = st.columns([1, 1])
 with market_col1:
     st.markdown(f"**{L['market_select']}**")
 with market_col2:
-    m_btn_us, m_btn_kr = st.columns(2)
+    m_btn_us = st.columns(1)[0]
     with m_btn_us:
         us_type = "primary" if st.session_state.market == "us" else "secondary"
         if st.button(L["market_us"], width='stretch', type=us_type):
             st.session_state.market = "us"
             st.rerun()
-    with m_btn_kr:
-        kr_type = "primary" if st.session_state.market == "kr" else "secondary"
-        if st.button(L["market_kr"], width='stretch', type=kr_type):
-            st.session_state.market = "kr"
-            st.rerun()
+
 
 st.markdown("---")
 
@@ -129,7 +125,7 @@ if ticker_final != st.session_state.current_ticker:
         stock_news = fetch_google_news_rss(ticker_final, st.session_state.lang)
     st.session_state.cached_data_bundle = data_bundle
     st.session_state.cached_news = stock_news
-else:
+elsedata_bundle = fetch_raw_financial_data(ticker_final, st.session_state.market
     # 캐시된 데이터 사용
     data_bundle = st.session_state.cached_data_bundle
     stock_news = st.session_state.cached_news
@@ -138,9 +134,7 @@ if data_bundle == "NO_API_KEY":
     st.error("사이드바에 DART API Key를 입력해야 한국 주식 데이터를 불러올 수 있습니다.")
 elif not data_bundle:
     err_key = "fetch_error_kr" if st.session_state.market == "kr" else "fetch_error"
-    st.error(L[err_key])
-else:
-    if isinstance(data_bundle, dict) and data_bundle.get('dart_error'):
+f isinstance(data_bundle, dict) and data_bundle.get('dart_error'):
         st.warning(data_bundle['dart_error'])
     render_analysis_tabs(
         L,

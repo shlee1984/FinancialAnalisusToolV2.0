@@ -1,12 +1,11 @@
 import streamlit as st
 import yfinance as yf
-from stock_search import search_krx_by_name
 from data_fetch import get_highly_secure_session
 
 
 def render_search_ui(L, market):
     search_col1, search_col2 = st.columns([1, 2])
-    ticker_final = "AAPL" if market == "us" else "005380"
+    ticker_final = "AAPL"
 
     with search_col1:
         search_type = st.radio(
@@ -52,40 +51,7 @@ def render_search_ui(L, market):
                     ticker_final = us_options[selected_display]
                 else:
                     ticker_final = st.session_state.get("us_selected_ticker", "AAPL")
-        else:
-            if search_type == L["by_ticker"]:
-                kr_code_input = st.text_input(
-                    L["enter_ticker_kr"],
-                    st.session_state.get("kr_ticker_input", "005380"),
-                    label_visibility="collapsed",
-                    placeholder="예: 005380",
-                    key="kr_ticker_input"
-                ).strip()
-                if st.button("검색", key="kr_ticker_search", use_container_width=True):
-                    st.session_state["kr_selected_ticker"] = kr_code_input.zfill(6) if kr_code_input else "005380"
-                ticker_final = st.session_state.get("kr_selected_ticker", kr_code_input.zfill(6) if kr_code_input else "005380")
-            else:
-                name_col_input, name_col_btn = st.columns([5, 1])
-                with name_col_input:
-                    kr_name_input = st.text_input(
-                        L["enter_name_kr"],
-                        st.session_state.get("kr_name_input", ""),
-                        label_visibility="collapsed",
-                        key="kr_name_input"
-                    ).strip()
-                with name_col_btn:
-                    do_search = st.button("검색", key="kr_name_search", use_container_width=True)
 
-                if do_search and kr_name_input:
-                    st.session_state["kr_search_query"] = kr_name_input
-                    st.session_state["kr_search_results"] = search_krx_by_name(kr_name_input)
-
-                kr_options = st.session_state.get("kr_search_results", {})
-                if kr_options:
-                    selected_kr = st.selectbox(L["select_company"], list(kr_options.keys()), label_visibility="collapsed")
-                    ticker_final = kr_options[selected_kr]
-                else:
-                    ticker_final = st.session_state.get("kr_selected_ticker", "005380")
 
     st.markdown("---")
     return ticker_final
